@@ -48,11 +48,7 @@ class CelebGanData(object):
         return torch.utils.data.DataLoader(
             self._dataset,
             batch_size=batch_size, num_workers=num_workers, shuffle=shuffle
-        )
-
-
-
-    
+        )    
 
 
 def main():
