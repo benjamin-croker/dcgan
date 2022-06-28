@@ -1,10 +1,7 @@
-import argparse
-import os
 import random
 import torch
 import torch.nn as nn
 import torch.nn.parallel
-import torch.backends.cudnn as cudnn
 import torch.optim
 import torch.utils.data
 import torchvision.datasets as tv_dset
@@ -20,6 +17,7 @@ import modules
 class CelebGanData(object):
     """ Class for loading the Celeb image datset
     """
+
     def __init__(self, dataset_params):
         print(f"Initialising CelebGan: {dataset_params}")
 
@@ -35,24 +33,26 @@ class CelebGanData(object):
                 tv_transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
             ])
         )
-    
-    def get_batch_loader(self, batch_size:int, num_workers:int=2, shuffle=True):
+
+    def get_batch_loader(self, batch_size: int, num_workers: int = 2, shuffle=True):
         return torch.utils.data.DataLoader(
             self._dataset,
             batch_size=batch_size, num_workers=num_workers, shuffle=shuffle
-        ) 
+        )
 
 
 class CelebGan(object):
     """ Class for combining the modules into a single GAN
     """
+
     def __init__(self, model_params):
         print(f"Initialising CelebGan: {model_params}")
         self.generator = modules.Generator(**model_params)
         self.discriminator = modules.Discriminator(**model_params)
         self.loss = nn.BCELoss()
         self._n_latent = model_params['n_latent']
-        
+        self._device = None
+
     def use_device(self, device):
         self.generator.to(device)
         self.discriminator.to(device)
@@ -71,14 +71,15 @@ class CelebGan(object):
     def generate(self, batch_size):
         """ Generate fake images from the latent space
         """
-        self.generator(
+        return self.generator(
             torch.randn(batch_size, self._n_latent, 1, 1, device=self._device)
-        ).detach()
+        )
 
 
 class CelebGanOptimiser(object):
     """ Class for training a GAN model. Initialises and returns the actual GAN model.
     """
+
     def __init__(self, dataset_params, model_params, opt_params):
         print(f"Initialising CelebGanOptimiser: {opt_params}")
 
@@ -90,7 +91,7 @@ class CelebGanOptimiser(object):
         self._device = torch.device(opt_params['device'])
         random.seed(opt_params['seed'])
         torch.manual_seed(opt_params['seed'])
-                
+
         self._dataset = CelebGanData(dataset_params)
         self._gan = CelebGan(model_params)
 
@@ -102,11 +103,11 @@ class CelebGanOptimiser(object):
             self._gan.discriminator.parameters(),
             lr=self._learning_rate, betas=(self._beta1, 0.999)
         )
-        # pre-set real and fake labels for generated or loaded data
         self._real_labels = torch.full(
             (self._batch_size,), 1.0, dtype=torch.float, device=self._device
         )
-        self._fake_label = torch.full(
+
+        self._fake_labels = torch.full(
             (self._batch_size,), 0.0, dtype=torch.float, device=self._device
         )
 
@@ -151,16 +152,15 @@ class CelebGanOptimiser(object):
 
         # total err
         return u_pred_fake, loss_gen
-    
-    def _report(self,
-                i_epoch, n_epoch, i_batch, n_batch,
+
+    @staticmethod
+    def _report(i_epoch, n_epoch, i_batch, n_batch,
                 loss_dis, loss_gen,
                 u_pred_real, u_pred_fake_pre, u_pred_fake_post):
-        msg = f'[{i_epoch+1}/{n_epoch}][{i_batch+1}/{n_batch}]\t'
+        msg = f'[{i_epoch + 1}/{n_epoch}][{i_batch + 1}/{n_batch}]\t'
         msg += f'LossD={loss_dis:.4f}\tLossG={loss_gen:.4f}\t'
         msg += f'D(real)={u_pred_real:.4f}\tD(G(z))={u_pred_fake_pre:.4f}->{u_pred_fake_post:.4f}\t'
         print(msg)
-
 
     def train(self):
         print(f"Starting training on {self._device}")
@@ -170,22 +170,26 @@ class CelebGanOptimiser(object):
 
         for i_epoch in range(self._n_epochs):
             loader = self._dataset.get_batch_loader(self._batch_size, self._workers)
-            
+
             # the _ is for the unused labels returned by the file loader
             for i_batch, (data_real, _) in enumerate(loader):
                 data_real = data_real.to(self._device)
                 data_fake = self._gan.generate(self._batch_size)
 
-                u_pred_real, u_pred_fake_pre, loss_dis = \
-                    self._step_discriminator(data_real, data_fake)
-                u_pred_fake_post, loss_gen = \
-                    self._step_generator(data_fake)
-            
-            if i_batch % 50 == 0:
-                self._report(
-                    i_epoch, self._n_epochs, i_batch, len(loader),
-                    loss_dis, loss_gen, u_pred_real, u_pred_fake_pre, u_pred_fake_post
+                # detach the data so it does not influence the generator
+                # when training the discriminator
+                u_pred_real, u_pred_fake_pre, loss_dis = self._step_discriminator(
+                    data_real, data_fake.detach()
                 )
+                u_pred_fake_post, loss_gen = self._step_generator(
+                    data_fake
+                )
+
+                if i_batch % 50 == 0:
+                    self._report(
+                        i_epoch, self._n_epochs, i_batch, len(loader),
+                        loss_dis, loss_gen, u_pred_real, u_pred_fake_pre, u_pred_fake_post
+                    )
 
 
 def main():

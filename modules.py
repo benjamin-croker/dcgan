@@ -54,7 +54,6 @@ class Generator(nn.Module):
                 n_feat_map_gen, n_channels,
                 kernel_size=4, stride=2, padding=1, bias=False
             ),
-            nn.BatchNorm2d(n_channels),
             nn.Tanh()
             # output size: (batch, n_channels, 64, 64)
         )
@@ -72,7 +71,7 @@ class Discriminator(nn.Module):
             # input size: (batch, n_channel, 64, 64)
             nn.Conv2d(
                 n_channels, n_feat_map_dis,
-                kernel_size=4, stride=1, padding=0, bias=False
+                kernel_size=4, stride=2, padding=1, bias=False
             ),
             nn.LeakyReLU(0.2, inplace=True),
 
