@@ -51,8 +51,8 @@ def train_celebgan():
 
 
 def main():
-    train_celebgan()
-    # show_generated_images('CelebGAN')
+    # train_celebgan()
+    show_generated_images('CelebGAN')
 
 
 if __name__ == '__main__':

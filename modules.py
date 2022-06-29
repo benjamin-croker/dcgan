@@ -279,6 +279,9 @@ class CelebGanOptimiser(object):
 
             # the _ is for the unused labels returned by the file loader
             for i_batch, (data_real, _) in enumerate(loader):
+                # skip over partial batch at the end
+                if data_real.shape[0] < self._batch_size:
+                    continue
                 data_real = data_real.to(self._device)
                 data_fake = self._gan.generate(self._batch_size)
 
