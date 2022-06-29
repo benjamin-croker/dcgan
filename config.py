@@ -1,5 +1,5 @@
 # TODO: move to json config
-DATASET_PARAMS =  {
+DATASET_PARAMS = {
     "dataset_dir": "data/",
     "image_size": 64
 }
@@ -18,3 +18,4 @@ OPTIMIZER_PARAMS = {
     "device": 'cuda',
     "seed": 42
 }
+MODEL_DIR = 'models/'
