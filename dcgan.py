@@ -1,4 +1,5 @@
 import os
+import sys
 
 import torch
 import torch.nn.parallel
@@ -41,18 +42,23 @@ def show_generated_images(model_id: str):
     plt.show()
 
 
-def train_celebgan():
+def train_celebgan(model_id: str):
     celeb_gan_optimiser = CelebGanOptimiser(
-        'CelebGAN',
-        config.DATASET_PARAMS, config.MODEL_PARAMS, config.OPTIMIZER_PARAMS
+        model_id, config.DATASET_PARAMS, config.MODEL_PARAMS, config.OPTIMIZER_PARAMS
     )
     celebgan = celeb_gan_optimiser.train()
     save_celebgan(celebgan)
 
 
 def main():
-    # train_celebgan()
-    show_generated_images('CelebGAN')
+    if len(sys.argv) < 3 or sys.argv[1] not in ['train', 'generate']:
+        print("usage: python dcgan.py {train|generate} <model id>")
+        sys.exit(1)
+
+    if sys.argv[1] == 'train':
+        train_celebgan(sys.argv[2])
+    elif sys.argv[1] == 'generate':
+        show_generated_images(sys.argv[2])
 
 
 if __name__ == '__main__':
