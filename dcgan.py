@@ -30,6 +30,7 @@ def load_celebgan(model_id: str) -> CelebGan:
 
 def show_generated_images(model_id: str):
     celebgan = load_celebgan(model_id)
+    celebgan.use_device('cpu')
 
     gen_img = celebgan.generate(64)
     gen_img = tv_utils.make_grid(gen_img, padding=2, normalize=True)
