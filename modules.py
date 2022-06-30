@@ -194,7 +194,12 @@ class CelebGanOptimiser(object):
         self._n_epochs = opt_params['n_epochs']
         self._learning_rate = opt_params['learning_rate']
         self._beta1 = opt_params['beta1']
-        self._device = torch.device(opt_params['device'])
+        # ignore device type if CUDA is not avilable
+        if torch.cuda.is_available():
+            self._device = torch.device(opt_params['device'])
+        else:
+            print("No GPU available. Using CPU and ignoring device setting")
+            self._device = torch.device('cpu')
         random.seed(opt_params['seed'])
         torch.manual_seed(opt_params['seed'])
 
