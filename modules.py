@@ -194,8 +194,8 @@ class CelebGanOptimiser(object):
         self._n_epochs = opt_params['n_epochs']
         self._learning_rate = opt_params['learning_rate']
         self._beta1 = opt_params['beta1']
-        # ignore device type if CUDA is not avilable
-        if torch.cuda.is_available():
+        # ignore device type if Apple MPS is not avilable
+        if torch.backends.mps.is_available():
             self._device = torch.device(opt_params['device'])
         else:
             print("No GPU available. Using CPU and ignoring device setting")

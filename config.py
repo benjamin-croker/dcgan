@@ -15,7 +15,7 @@ OPTIMIZER_PARAMS = {
     "n_epochs": 5,
     "learning_rate": 0.0002,
     "beta1": 0.5,
-    "device": 'cuda',
+    "device": 'mps',
     "seed": 42
 }
 MODEL_DIR = 'models/'
